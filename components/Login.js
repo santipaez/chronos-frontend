@@ -1,29 +1,17 @@
-$(document).ready(function () {
-    // on ready
-});
+import { handleLogin } from '../Axios';
 
-
-async function login() {
-    let data = {};
-    data.email = document.getElementById('txtEmail').value;
-    data.password = document.getElementById('txtPassword').value;
-
-    const request = await fetch('api/login', {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    });
-
-    const respuesta = await request.text();
-    if (respuesta != 'FAIL') {
-        localStorage.token = respuesta;
-        localStorage.email = datos.email;
-        window.location.href = 'users.html'
-    } else {
-        alert("Las credenciales son incorrectas. Por favor intente nuevamente.");
+export const onLogin = async (username, password, setError, setSuccess, navigation) => {
+    setError('');
+    setSuccess('');
+    try {
+        const response = await handleLogin(username, password);
+        if (response.status === 200) {
+            // Manejar el éxito del login, por ejemplo, navegar a otra pantalla
+            navigation.navigate('HomeScreen');
+        } else {
+            setError('La contraseña o el usuario son incorrectos');
+        }
+    } catch (err) {
+        setError('La contraseña o el usuario son incorrectos');
     }
-
-}
+};

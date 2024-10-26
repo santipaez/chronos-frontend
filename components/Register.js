@@ -1,30 +1,19 @@
-$(document).ready(function () {
-    // on ready
-});
+import { handleRegister } from '../Axios';
 
-
-async function register() {
-    let data = {};
-    data.name = document.getElementById('txtUsername').value;
-    data.email = document.getElementById('txtEmail').value;
-    data.password = document.getElementById('txtPassword').value;
-
-    let repeatPassword = document.getElementById('txtRepeatPassword').value;
-
-    if (repeatPassword != data.password) {
-        alert('Ingresaste una contraseña distinta. Por favor, intenta nuevamente.');
-        return;
+export const onRegister = async (username, email, password, setError, setSuccess, navigation) => {
+    setError('');
+    setSuccess('');
+    try {
+        const response = await handleRegister(username, email, password);
+        if (response.status === 200) {
+            setSuccess('Cuenta creada exitosamente. Redirigiendo al login...');
+            setTimeout(() => {
+                navigation.navigate('LoginScreen');
+            }, 2000); // Espera 2 segundos antes de redirigir al login
+        } else {
+            setError('Registro fallido');
+        }
+    } catch (err) {
+        setError('Registro fallido');
     }
-
-    const request = await fetch('api/users', {
-        method: 'POST',
-        headers: {
-            'Accept': 'application/json',
-            'Content-Type': 'application/json'
-        },
-        body: JSON.stringify(data)
-    });
-    alert("Cuenta creada con éxito. Por favor, inicia sesión.");
-    window.location.href = 'login.html'
-
-}
+};
