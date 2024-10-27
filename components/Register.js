@@ -1,4 +1,19 @@
-import { handleRegister } from '../Axios';
+import axios from 'axios';
+import { AUTH_URL } from './config';
+
+export const handleRegister = async (username, email, password) => {
+    try {
+        console.log(username, email, password);
+        const response = await axios.post(`${AUTH_URL}/register`, {
+            username,
+            email,
+            password
+        });
+        return response;
+    } catch (err) {
+        throw err;
+    }
+};
 
 export const onRegister = async (username, email, password, setError, setSuccess, navigation) => {
     setError('');

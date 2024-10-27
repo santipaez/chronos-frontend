@@ -1,4 +1,17 @@
-import { handleLogin } from '../Axios';
+import axios from 'axios';
+import { AUTH_URL } from './config';
+
+export const handleLogin = async (username, password) => {
+    try {
+        const response = await axios.post(`${AUTH_URL}/login`, {
+            username,
+            password
+        });
+        return response;
+    } catch (err) {
+        throw err;
+    }
+};
 
 export const onLogin = async (username, password, setError, setSuccess, navigation) => {
     setError('');
