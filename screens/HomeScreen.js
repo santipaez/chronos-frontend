@@ -1,26 +1,39 @@
-import React, { useEffect, useRef } from 'react';
-import { View, Text, StyleSheet, ScrollView, Animated } from 'react-native';
-import { Calendar } from 'react-native-calendars';
+import React, { useEffect, useRef, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity } from 'react-native';
+import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useTheme } from '@react-navigation/native';
+import { getSchedules } from '../components/Schedule';
+import { Edit } from 'lucide-react-native';
 
-export default function HomeScreen() {
+// Configurar la localización en español
+LocaleConfig.locales['es'] = {
+  monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
+  monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
+  dayNames: ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado'],
+  dayNamesShort: ['Dom', 'Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb'],
+  today: 'Hoy'
+};
+LocaleConfig.defaultLocale = 'es';
+
+export default function HomeScreen({ navigation }) {
   const { colors } = useTheme();
-  const fadeAnim = useRef(new Animated.Value(0)).current; // Valor inicial de opacidad
+  const fadeAnim = useRef(new Animated.Value(0)).current;
+  const [schedules, setSchedules] = useState([]);
 
   useEffect(() => {
+    getSchedules()
+      .then(data => setSchedules(data))
+      .catch(error => {
+        console.error('Error al obtener los horarios:', error);
+      });
+
+    // Ejecutar la animación de desvanecimiento
     Animated.timing(fadeAnim, {
       toValue: 1,
-      duration: 200,
+      duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, [fadeAnim]);
-
-  const upcomingEvents = [
-    { id: 1, title: 'Reunión de equipo', time: '10:00 AM', date: '2023-06-15' },
-    { id: 2, title: 'Almuerzo con el profesor', time: '12:30 PM', date: '2023-06-15' },
-    { id: 3, title: 'Entrega de proyecto', time: '5:00 PM', date: '2023-06-17' },
-    { id: 4, title: 'Sesión de estudio en la biblioteca', time: '7:00 AM', date: '2023-06-18' },
-  ];
+  }, []);
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: colors.background }]}>
@@ -38,17 +51,25 @@ export default function HomeScreen() {
             textDisabledColor: colors.border,
           }}
         />
-
         <View style={[styles.eventsContainer, { backgroundColor: colors.card }]}>
-          <Text style={[styles.eventsTitle, { color: colors.text }]}>Próximos Eventos</Text>
-          {upcomingEvents.map((event) => (
-            <View key={event.id} style={styles.eventItem}>
+          <View style={styles.header}>
+            <Text style={[styles.eventsTitle, { color: colors.text }]}>Próximos Horarios</Text>
+            <TouchableOpacity onPress={() => navigation.navigate('Horarios')}>
+              <Edit color={colors.text} size={24} />
+            </TouchableOpacity>
+          </View>
+          {schedules.map((schedule) => (
+            <TouchableOpacity
+              key={schedule.id}
+              style={styles.eventItem}
+              activeOpacity={0.5}
+            >
               <View>
-                <Text style={[styles.eventTitle, { color: colors.text }]}>{event.title}</Text>
-                <Text style={[styles.eventTime, { color: colors.text }]}>{event.time}</Text>
+                <Text style={styles.eventTitle}>{schedule.name}</Text>
+                <Text style={styles.eventTime}>{schedule.startTime} - {schedule.endTime}</Text>
+                <Text style={styles.eventDate}>{schedule.day}</Text>
               </View>
-              <Text style={[styles.eventDate, { color: colors.text }]}>{event.date}</Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </View>
       </ScrollView>
@@ -72,10 +93,15 @@ const styles = StyleSheet.create({
     margin: 16,
     marginTop: 0,
   },
+  header: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
   eventsTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 10,
   },
   eventItem: {
     flexDirection: 'row',
