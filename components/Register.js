@@ -1,5 +1,5 @@
 import axios from 'axios';
-import { AUTH_URL } from './config';
+import { AUTH_URL } from '../config';
 
 export const handleRegister = async (username, email, password) => {
     try {
