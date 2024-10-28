@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { Animated, Easing, StyleSheet, Text } from 'react-native';
 import { Clock } from 'lucide-react-native';
 import { useNavigation } from '@react-navigation/native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const Welcome = () => {
     const [fadeAnim] = useState(new Animated.Value(0));
@@ -36,16 +35,7 @@ const Welcome = () => {
                 easing: Easing.out(Easing.ease),
                 useNativeDriver: true,
             }).start();
-
-            // Verificar si el usuario está autenticado
-            const token = await AsyncStorage.getItem('token');
-            if (token) {
-                // Navegar al componente principal si el usuario está autenticado
-                navigation.navigate('HomeScreen');
-            } else {
-                // Navegar al componente de registro si el usuario no está autenticado
-                navigation.navigate('LoginScreen');
-            }
+            navigation.navigate('LoginScreen');
         }, 2000); // Cambia el tiempo según sea necesario
 
         return () => clearTimeout(timer);
