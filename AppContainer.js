@@ -9,8 +9,7 @@ import WelcomeScreen from './screens/WelcomeScreen';
 import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
-import ScheduleScreen from './components/ScheduleScreen';
-import RoutineScreen from './components/RoutineScreen';
+import ScheduleScreen from './screens/ScheduleScreen';
 import AddEventScreen from './components/AddEventScreen';
 import DrawerContent from './components/DrawerContent';
 
@@ -52,7 +51,6 @@ function TabNavigator({ isDarkMode }) {
                 })}
             />
             <Tab.Screen name="Horarios" component={ScheduleScreen} />
-            <Tab.Screen name="Rutina" component={RoutineScreen} />
             <Tab.Screen name="Agendar" component={AddEventScreen} />
         </Tab.Navigator>
     );
