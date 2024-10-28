@@ -5,8 +5,6 @@ import * as NavigationBar from 'expo-navigation-bar';
 
 // enables edge-to-edge mode
 NavigationBar.setPositionAsync('absolute')
-// transparent backgrounds to see through
-NavigationBar.setBackgroundColorAsync('#ffffff00')
 // changes the color of the button icons "dark||light"
 NavigationBar.setButtonStyleAsync("dark");
 
