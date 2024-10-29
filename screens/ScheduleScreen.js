@@ -103,7 +103,7 @@ export default function ScheduleScreen() {
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Horarios</Text>
+            <Text style={styles.title}>Aquí puedes gestionar tus horarios</Text>
             <FlatList
                 data={daysOfWeek}
                 renderItem={renderDay}
@@ -170,10 +170,14 @@ const styles = StyleSheet.create({
         backgroundColor: '#f5f5f5',
     },
     title: {
-        fontSize: 24,
-        fontWeight: 'bold',
+        fontSize: 18,
         marginBottom: 16,
         textAlign: 'center',
+        color: '#333',
+        borderRadius: 5,
+        borderColor: '#cdcdcd',
+        borderWidth: 1,
+        padding: 10,
     },
     dayHeader: {
         flexDirection: 'row',

@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Calendar, Clock, PlusCircle, Menu } from 'lucide-react-native';
+import { Home, Calendar, Clock, PlusCircle, Menu, ArrowLeft } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
 
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -12,6 +12,10 @@ import HomeScreen from './screens/HomeScreen';
 import ScheduleScreen from './screens/ScheduleScreen';
 import AddEventScreen from './components/AddEventScreen';
 import DrawerContent from './components/DrawerContent';
+import ProfileScreen from './screens/ProfileScreen';
+import OptionsScreen from './screens/OptionsScreen';
+import LogoutScreen from './screens/LogoutScreen';
+
 
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
@@ -39,9 +43,9 @@ function TabNavigator({ isDarkMode }) {
                 tabBarInactiveTintColor: 'gray',
             })}
         >
-            <Tab.Screen 
-                name="Inicio" 
-                component={HomeScreen} 
+            <Tab.Screen
+                name="Inicio"
+                component={HomeScreen}
                 options={({ navigation }) => ({
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
@@ -50,8 +54,28 @@ function TabNavigator({ isDarkMode }) {
                     ),
                 })}
             />
-            <Tab.Screen name="Horarios" component={ScheduleScreen} />
-            <Tab.Screen name="Agendar" component={AddEventScreen} />
+            <Tab.Screen
+                name="Horarios"
+                component={ScheduleScreen}
+                options={({ navigation }) => ({
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
+                            <Menu color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
+                        </TouchableOpacity>
+                    ),
+                })}
+            />
+            <Tab.Screen
+                name="Agendar"
+                component={AddEventScreen}
+                options={({ navigation }) => ({
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
+                            <Menu color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
+                        </TouchableOpacity>
+                    ),
+                })}
+            />
         </Tab.Navigator>
     );
 }
@@ -65,7 +89,7 @@ export default function App() {
 
     return (
         <NavigationContainer theme={isDarkMode ? DarkTheme : DefaultTheme}>
-            <Drawer.Navigator 
+            <Drawer.Navigator
                 drawerContent={(props) => <DrawerContent {...props} toggleTheme={toggleTheme} isDarkMode={isDarkMode} />}
                 screenOptions={({ navigation }) => ({
                     headerLeft: () => (
@@ -81,6 +105,25 @@ export default function App() {
                 <Drawer.Screen name="HomeScreen" options={{ headerShown: false }} >
                     {props => <TabNavigator {...props} isDarkMode={isDarkMode} />}
                 </Drawer.Screen>
+                <Drawer.Screen name="ProfileScreen" component={ProfileScreen} options={({ navigation }) => ({
+                    headerShown: true,
+                    title: 'Mi perfil',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => navigation.navigate(HomeScreen)} style={{ marginLeft: 16 }}>
+                            <ArrowLeft color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
+                        </TouchableOpacity>
+                    ),
+                })} />
+                <Drawer.Screen name="OptionsScreen" component={OptionsScreen} options={({ navigation }) => ({
+                    headerShown: true,
+                    title: 'Opciones',
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => navigation.navigate(HomeScreen)} style={{ marginLeft: 16 }}>
+                            <ArrowLeft color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
+                        </TouchableOpacity>
+                    ),
+                })} />
+                <Drawer.Screen name="LogoutScreen" component={LogoutScreen} options={{ headerShown: true, title: 'Cerrar sesión' }} />
             </Drawer.Navigator>
         </NavigationContainer>
     );
