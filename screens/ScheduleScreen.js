@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Button, Modal, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { getSchedulesByDay, createSchedule } from '../components/Schedule';
+import { getSchedulesByDay, createSchedule, updateSchedule, deleteSchedule } from '../components/Schedule';
+import { Edit, Trash } from 'lucide-react-native';
 
 const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -16,6 +17,7 @@ export default function ScheduleScreen() {
         endTime: new Date(),
         day: '',
     });
+    const [editingSchedule, setEditingSchedule] = useState(null);
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
@@ -33,8 +35,11 @@ export default function ScheduleScreen() {
             startTime: formatTime(newSchedule.startTime),
             endTime: formatTime(newSchedule.endTime),
         };
-        console.log('Datos del nuevo horario:', formattedSchedule); // Agregado para depuración
-        await createSchedule(formattedSchedule);
+        if (editingSchedule) {
+            await updateSchedule(editingSchedule.id, formattedSchedule);
+        } else {
+            await createSchedule(formattedSchedule);
+        }
         fetchSchedulesByDay(newSchedule.day);
         setNewSchedule({
             name: '',
@@ -43,7 +48,46 @@ export default function ScheduleScreen() {
             endTime: new Date(),
             day: '',
         });
+        setEditingSchedule(null);
         setModalVisible(false);
+    };
+
+    const handleEditSchedule = (schedule) => {
+        setNewSchedule({
+            name: schedule.name,
+            description: schedule.description,
+            startTime: new Date(`1970-01-01T${schedule.startTime}:00`), // Convertir a objeto Date
+            endTime: new Date(`1970-01-01T${schedule.endTime}:00`), // Convertir a objeto Date
+            day: schedule.day,
+        });
+        setEditingSchedule(schedule);
+        setModalVisible(true);
+    };
+
+    const handleDeleteSchedule = async (scheduleId, day) => {
+        await deleteSchedule(scheduleId);
+        fetchSchedulesByDay(day);
+    };
+
+    const handleStartTimeChange = (event, selectedDate) => {
+        const currentDate = selectedDate || newSchedule.startTime;
+        setShowStartTimePicker(Platform.OS === 'ios');
+        setNewSchedule({ ...newSchedule, startTime: currentDate });
+    };
+
+    const handleEndTimeChange = (event, selectedDate) => {
+        const currentDate = selectedDate || newSchedule.endTime;
+        setShowEndTimePicker(Platform.OS === 'ios');
+        setNewSchedule({ ...newSchedule, endTime: currentDate });
+    };
+
+    const formatTime = (date) => {
+        if (!(date instanceof Date) || isNaN(date)) {
+            return '';
+        }
+        const hours = date.getHours().toString().padStart(2, '0');
+        const minutes = date.getMinutes().toString().padStart(2, '0');
+        return `${hours}:${minutes}`;
     };
 
     const renderDay = ({ item: day }) => (
@@ -70,36 +114,25 @@ export default function ScheduleScreen() {
                 <View style={styles.scheduleContainer}>
                     {schedules[day]?.map(schedule => (
                         <View key={schedule.id} style={styles.scheduleItem}>
+                            <View style={styles.scheduleActions}>
+                                <TouchableOpacity onPress={() => handleEditSchedule(schedule)}>
+                                    <Edit size={24} color="#007AFF" />
+                                </TouchableOpacity>
+                            </View>
                             <Text style={styles.scheduleName}>{schedule.name}</Text>
                             <Text style={styles.scheduleTime}>{`Desde: ${schedule.startTime} - Hasta: ${schedule.endTime}`}</Text>
                             <Text style={styles.scheduleDescription}>{schedule.description}</Text>
+                            <View style={styles.scheduleActions}>
+                                <TouchableOpacity onPress={() => handleDeleteSchedule(schedule.id, day)}>
+                                    <Trash size={24} color="#FF3B30" />
+                                </TouchableOpacity>
+                            </View>
                         </View>
                     ))}
                 </View>
             )}
         </View>
     );
-
-    const handleStartTimeChange = (event, selectedDate) => {
-        const currentDate = selectedDate || newSchedule.startTime;
-        setShowStartTimePicker(Platform.OS === 'ios');
-        setNewSchedule({ ...newSchedule, startTime: currentDate });
-    };
-
-    const handleEndTimeChange = (event, selectedDate) => {
-        const currentDate = selectedDate || newSchedule.endTime;
-        setShowEndTimePicker(Platform.OS === 'ios');
-        setNewSchedule({ ...newSchedule, endTime: currentDate });
-    };
-
-    const formatTime = (date) => {
-        if (!(date instanceof Date) || isNaN(date)) {
-            return '';
-        }
-        const hours = date.getHours().toString().padStart(2, '0');
-        const minutes = date.getMinutes().toString().padStart(2, '0');
-        return `${hours}:${minutes}`;
-    };
 
     return (
         <View style={styles.container}>
@@ -117,7 +150,7 @@ export default function ScheduleScreen() {
             >
                 <View style={styles.modalContainer}>
                     <View style={styles.modalContent}>
-                        <Text style={styles.modalTitle}>Añadir Horario</Text>
+                        <Text style={styles.modalTitle}>{editingSchedule ? 'Editar Horario' : 'Añadir Horario'}</Text>
                         <TextInput
                             style={styles.input}
                             placeholder="Nombre"
@@ -153,7 +186,7 @@ export default function ScheduleScreen() {
                             />
                         )}
                         <View style={styles.buttonContainer}>
-                            <Button title="Añadir Horario" onPress={handleAddSchedule} />
+                            <Button title={editingSchedule ? 'Guardar Cambios' : 'Añadir Horario'} onPress={handleAddSchedule} />
                             <Button title="Cancelar" onPress={() => setModalVisible(false)} />
                         </View>
                     </View>
@@ -205,7 +238,7 @@ const styles = StyleSheet.create({
         marginVertical: 8,
     },
     scheduleItem: {
-        backgroundColor: '#fff',
+        backgroundColor: '#ffffff',
         padding: 10,
         borderRadius: 5,
         marginBottom: 10,
@@ -214,6 +247,12 @@ const styles = StyleSheet.create({
         shadowOpacity: 0.1,
         shadowRadius: 4,
         elevation: 2,
+        position: 'relative',
+    },
+    editButtonContainer: {
+        position: 'absolute',
+        top: 10,
+        right: 10,
     },
     scheduleName: {
         fontSize: 18,
@@ -227,6 +266,11 @@ const styles = StyleSheet.create({
     scheduleDescription: {
         fontSize: 14,
         color: '#777',
+    },
+    scheduleActions: {
+        flexDirection: 'row',
+        justifyContent: 'flex-end',
+        marginTop: 0,
     },
     modalContainer: {
         flex: 1,

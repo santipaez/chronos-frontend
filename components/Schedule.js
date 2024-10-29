@@ -61,19 +61,13 @@ export const createSchedule = async (schedule) => {
 
 // Actualizar un horario por ID
 export async function updateSchedule(id, schedule) {
-    const response = await fetch(`${SCHEDULE_URL}/${id}`, {
-        method: 'PUT',
-        headers: {
-            'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(schedule),
-    });
-
-    if (!response.ok) {
+    const headers = await getHeaders();
+    try {
+        const response = await axios.put(`${SCHEDULE_URL}/${id}`, schedule, { headers });
+        return response.data;
+    } catch (error) {
         throw new Error('Failed to update schedule');
     }
-
-    return await response.json();
 }
 
 // Eliminar un horario por ID
