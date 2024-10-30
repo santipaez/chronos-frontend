@@ -36,7 +36,7 @@ const Welcome = () => {
                 useNativeDriver: true,
             }).start();
             navigation.navigate('LoginScreen');
-        }, 2000); // Cambia el tiempo según sea necesario
+        }, 1000); // Cambia el tiempo según sea necesario
 
         return () => clearTimeout(timer);
     }, [fadeAnim, rotateAnim, navigation]);
