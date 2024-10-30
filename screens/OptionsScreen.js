@@ -1,73 +1,134 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, Switch, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList } from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { Settings } from 'lucide-react-native';
-import { requestNotificationPermissions, cancelAllNotifications } from '../notifications';
+import { Picker } from '@react-native-picker/picker';
+import { Settings, Bell } from 'lucide-react-native';
+import * as Location from 'expo-location';
+import { API_WEATHER } from '../config';
+import { requestNotificationPermissions, cancelAllNotifications } from '../notifications'; // Importar correctamente
 
 export default function OptionsScreen() {
-  const [isEnabled, setIsEnabled] = useState(false);
-  const [notificationsEnabled, setNotificationsEnabled] = useState(false);
+  const [notificationHours, setNotificationHours] = useState(12);
+  const [city, setCity] = useState('');
+  const [citySuggestions, setCitySuggestions] = useState([]);
+  const [selectedCity, setSelectedCity] = useState(null);
 
   useEffect(() => {
     const loadSettings = async () => {
-      const storedNotificationsEnabled = await AsyncStorage.getItem('@notifications_enabled');
-      if (storedNotificationsEnabled !== null) {
-        setNotificationsEnabled(JSON.parse(storedNotificationsEnabled));
+      const storedNotificationHours = await AsyncStorage.getItem('@notification_hours');
+      if (storedNotificationHours !== null) {
+        setNotificationHours(parseInt(storedNotificationHours, 10));
+      }
+      const storedCity = await AsyncStorage.getItem('@selected_city');
+      if (storedCity) {
+        setSelectedCity(JSON.parse(storedCity));
+        setCity(JSON.parse(storedCity).name);
       }
     };
     loadSettings();
   }, []);
 
-  const toggleSwitch = () => setIsEnabled(previousState => !previousState);
+  const handleNotificationHoursChange = async (hours) => {
+    setNotificationHours(hours);
+    await AsyncStorage.setItem('@notification_hours', hours.toString());
+  };
 
-  const toggleNotifications = async () => {
-    const newValue = !notificationsEnabled;
-    setNotificationsEnabled(newValue);
-    await AsyncStorage.setItem('@notifications_enabled', JSON.stringify(newValue));
-    if (newValue) {
-      await requestNotificationPermissions();
-      // Programar notificaciones para eventos futuros
-      // Aquí deberías obtener los eventos y horarios y programar las notificaciones
-    } else {
-      await cancelAllNotifications();
+  const fetchCitySuggestions = async (query) => {
+    try {
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/find?q=${query}&type=like&sort=population&cnt=5&appid=${API_WEATHER}`);
+      const data = await response.json();
+      setCitySuggestions(data.list);
+    } catch (error) {
+      console.error('Error fetching city suggestions:', error);
     }
   };
 
-  return (
-    <ScrollView contentContainerStyle={styles.container}>
+  const handleCitySelect = async (city) => {
+    setSelectedCity(city);
+    setCity(city.name);
+    setCitySuggestions([]);
+    await AsyncStorage.setItem('@selected_city', JSON.stringify(city));
+  };
+
+  const getLocationAndWeather = async () => {
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permiso de ubicación denegado');
+        return;
+      }
+      const location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_WEATHER}&units=metric`);
+      const data = await response.json();
+      setSelectedCity(data);
+      setCity(data.name);
+      await AsyncStorage.setItem('@selected_city', JSON.stringify(data));
+    } catch (error) {
+      console.error('Error getting location and weather:', error);
+    }
+  };
+
+  const renderCitySuggestion = ({ item }) => (
+    <TouchableOpacity onPress={() => handleCitySelect(item)}>
+      <Text style={styles.suggestion}>{item.name}, {item.sys.country}</Text>
+    </TouchableOpacity>
+  );
+
+  const renderOptionScreen = () => (
+    <View style={styles.container}>
       <Text style={styles.header}>Configuraciones</Text>
-      <View style={styles.section}>
-        <View style={styles.sectionHeader}>
-          <Settings size={24} color="#007AFF" />
-          <Text style={styles.sectionTitle}>General</Text>
-        </View>
-        <View style={styles.option}>
-          <Text style={styles.label}>Opción de ejemplo:</Text>
-          <Switch
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={isEnabled ? "#f5dd4b" : "#f4f3f4"}
-            onValueChange={toggleSwitch}
-            value={isEnabled}
-          />
-        </View>
-      </View>
       <View style={styles.divider} />
       <View style={styles.section}>
         <View style={styles.sectionHeader}>
-          <Settings size={24} color="#007AFF" />
+          <Bell size={24} color="#007AFF" />
           <Text style={styles.sectionTitle}>Notificaciones</Text>
         </View>
         <View style={styles.option}>
-          <Text style={styles.label}>Habilitar Notificaciones:</Text>
-          <Switch
-            trackColor={{ false: "#767577", true: "#81b0ff" }}
-            thumbColor={notificationsEnabled ? "#f5dd4b" : "#f4f3f4"}
-            onValueChange={toggleNotifications}
-            value={notificationsEnabled}
-          />
+          <Text style={styles.label}>Horas antes de la notificación:</Text>
+          <Picker
+            selectedValue={notificationHours}
+            style={styles.picker}
+            onValueChange={handleNotificationHoursChange}
+          >
+            {[...Array(25).keys()].map(hour => (
+              <Picker.Item key={hour} label={`${hour} hora/s`} value={hour} />
+            ))}
+          </Picker>
         </View>
       </View>
-    </ScrollView>
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Settings size={24} color="#007AFF" />
+          <Text style={styles.sectionTitle}>Ciudad</Text>
+        </View>
+        <TextInput
+          style={styles.input}
+          placeholder="Ingrese su ciudad"
+          value={city}
+          onChangeText={(text) => {
+            setCity(text);
+            fetchCitySuggestions(text);
+          }}
+        />
+        <FlatList
+          data={citySuggestions}
+          keyExtractor={(item) => item.id.toString()}
+          renderItem={renderCitySuggestion}
+        />
+        <TouchableOpacity style={styles.button} onPress={getLocationAndWeather}>
+          <Text style={styles.buttonText}>Usar mi ubicación actual</Text>
+        </TouchableOpacity>
+      </View>
+    </View>
+  );
+
+  return (
+    <FlatList
+      data={[{ key: 'options' }]}
+      renderItem={renderOptionScreen}
+      keyExtractor={(item) => item.key}
+    />
   );
 }
 
@@ -117,9 +178,35 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     color: '#333',
   },
+  picker: {
+    width: 150,
+  },
   divider: {
     height: 1,
     backgroundColor: '#e0e0e0',
     marginVertical: 20,
+  },
+  input: {
+    borderWidth: 1,
+    borderColor: '#ccc',
+    padding: 10,
+    borderRadius: 5,
+    marginBottom: 10,
+  },
+  suggestion: {
+    padding: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#ccc',
+  },
+  button: {
+    backgroundColor: '#007AFF',
+    padding: 10,
+    borderRadius: 5,
+    alignItems: 'center',
+    marginTop: 10,
+  },
+  buttonText: {
+    color: '#fff',
+    fontSize: 16,
   },
 });
