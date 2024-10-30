@@ -3,7 +3,6 @@ import { AUTH_URL } from '../config';
 
 export const handleRegister = async (username, email, password) => {
     try {
-        console.log(username, email, password);
         const response = await axios.post(`${AUTH_URL}/register`, {
             username,
             email,

@@ -24,11 +24,6 @@ export default function DrawerContent(props) {
           <Clock color={textColor} size={48} style={styles.icon} />
           <Text style={[styles.title, { color: textColor }]}>Chronos</Text>
         </View>
-        {/* Opciones del menú */}
-        <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate('ProfileScreen')}>
-          <User color={textColor} size={24} style={styles.icon} />
-          <Text style={[styles.menuText, { color: textColor }]}>Mi perfil</Text>
-        </TouchableOpacity>
         <TouchableOpacity style={styles.menuItem} onPress={() => props.navigation.navigate('OptionsScreen')}>
           <Settings color={textColor} size={24} style={styles.icon} />
           <Text style={[styles.menuText, { color: textColor }]}>Opciones</Text>

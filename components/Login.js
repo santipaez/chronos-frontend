@@ -8,10 +8,9 @@ export const handleLogin = async (username, password) => {
             username,
             password
         });
-        const token =  response.data.token; 
+        const token = response.data.token; 
         await AsyncStorage.setItem('@jwt_token', token);
         return response;
-        
     } catch (err) {
         throw err;
     }

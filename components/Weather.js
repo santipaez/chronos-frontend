@@ -1,112 +1,88 @@
+// chronos-frontend/components/Weather.js
+import axios from 'axios';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import moment from 'moment';
 import React from 'react';
-import { View, Text, StyleSheet } from 'react-native';
-import { Droplet, Wind, BarChart2 } from 'lucide-react-native';
+import { StyleSheet } from 'react-native';
+import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning } from 'lucide-react-native';
 
-const Weather = ({ data, getWeatherIcon }) => {
-    const textColor = '#fff';
-    const roundedTemp = Math.round(data.main.temp);
-    const roundedWindSpeed = Math.round(data.wind.speed);
+export const fetchTemperature = async (date) => {
+    try {
+        const storedCity = await AsyncStorage.getItem('@selected_city');
+        const city = storedCity ? JSON.parse(storedCity) : null;
+        const token = await AsyncStorage.getItem('@jwt_token');
 
-    const translateDescription = (description) => {
-        const translations = {
-            'clear sky': 'cielo despejado',
-            'few clouds': 'pocas nubes',
-            'scattered clouds': 'nubes dispersas',
-            'broken clouds': 'nubes rotas',
-            'shower rain': 'lluvia ligera',
-            'rain': 'lluvia',
-            'thunderstorm': 'tormenta',
-            'snow': 'nieve',
-            'mist': 'niebla',
-        };
-        return translations[description] || description;
-    };
+        const { lat, lon } = city.coord;
 
-    return (
-        <View style={styles.container}>
-            <View style={styles.weatherBox}>
-                <View style={styles.cityRow}>
-                    <Text style={[styles.city, { color: textColor }]}>{data.name}</Text>
-                    {getWeatherIcon(data.weather[0].main)}
-                </View>
-                <Text style={[styles.temperature, { color: textColor }]}>{roundedTemp}°C</Text>
-                <Text style={[styles.description, { color: textColor }]}>{translateDescription(data.weather[0].description)}</Text>
-            </View>
-            <View style={styles.detailsBox}>
-                <View style={styles.details}>
-                    <View style={styles.detailItem}>
-                        <Droplet color="#00BFFF" size={32} />
-                        <Text style={[styles.detail, { color: textColor }]}>{data.main.humidity}%</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <Wind color="#1E90FF" size={32} />
-                        <Text style={[styles.detail, { color: textColor }]}>{roundedWindSpeed} m/s</Text>
-                    </View>
-                    <View style={styles.detailItem}>
-                        <BarChart2 color="#FFD700" size={32} />
-                        <Text style={[styles.detail, { color: textColor }]}>{data.main.pressure} hPa</Text>
-                    </View>
-                </View>
-            </View>
-        </View>
-    );
+        const response = await axios.get(`http://192.168.100.30:8080/forecast?lat=${lat}&lon=${lon}`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+
+        if (response.status !== 200) {
+            console.error('Error fetching weather data:', response.status, response.statusText, response.data);
+            return { temp: null, icon: null };
+        }
+
+        const data = response.data;
+
+        if (data && data.list) {
+            const eventDate = moment(date).startOf('day');
+            const dailyForecasts = data.list.filter(forecast => moment(forecast.dt_txt).isSame(eventDate, 'day'));
+            if (dailyForecasts.length > 0) {
+                const maxTemp = Math.max(...dailyForecasts.map(forecast => forecast.main.temp_max));
+                const weatherIcon = dailyForecasts[0].weather[0].main;
+                return { temp: maxTemp, icon: weatherIcon };
+            } else {
+                return { temp: null, icon: null };
+            }
+        } else {
+            console.error('Error: Datos de pronóstico no disponibles');
+            return { temp: null, icon: null };
+        }
+    } catch (error) {
+        console.error('Error fetching temperature:', error);
+        return { temp: null, icon: null };
+    }
+}
+
+export const getWeatherIcon = (weather) => {
+    switch (weather) {
+        case 'Clear':
+            return <Sun size={24} color="#FFA500" style={styles.weatherIcon} />; // Color más oscuro
+        case 'Clouds':
+            return <Cloud size={24} color="#B0C4DE" style={styles.weatherIcon} />;
+        case 'Rain':
+            return <CloudRain size={24} color="#1E90FF" style={styles.weatherIcon} />;
+        case 'Snow':
+            return <CloudSnow size={24} color="#00BFFF" style={styles.weatherIcon} />;
+        case 'Thunderstorm':
+            return <CloudLightning size={24} color="#FFA500" style={styles.weatherIcon} />;
+        default:
+            return null;
+    }
 };
 
+export const fetchCityFromCoords = async (lat, lon) => {
+    try {
+      const token = await AsyncStorage.getItem('@jwt_token');
+      const response = await axios.get(`http://192.168.100.30:8080/weather?lat=${lat}&lon=${lon}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        }
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching city from coordinates:', error);
+      return null;
+    }
+  };
+
 const styles = StyleSheet.create({
-    container: {
-        alignItems: 'center',
-        padding: 20,
-    },
-    weatherBox: {
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        borderRadius: 10,
-        padding: 20,
-        alignItems: 'flex-start',
-        marginBottom: 20,
-        width: '100%',
-    },
-    cityRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        width: '100%',
-    },
-    city: {
-        fontSize: 32,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    temperature: {
-        fontSize: 48,
-        fontWeight: 'bold',
-        marginBottom: 10,
-    },
-    description: {
-        fontSize: 24,
-        fontStyle: 'italic',
-        marginBottom: 10,
-    },
-    detailsBox: {
-        marginTop: 20,
-        padding: 20,
-        borderRadius: 10,
-        backgroundColor: 'rgba(0, 0, 0, 0.4)',
-        width: '100%',
-    },
-    details: {
-        flexDirection: 'row',
-        justifyContent: 'space-around',
-        width: '100%',
-    },
-    detailItem: {
-        alignItems: 'center',
-        marginHorizontal: 10,
-    },
-    detail: {
-        fontSize: 20,
-        fontWeight: 'bold',
-        marginTop: 5,
+    weatherIcon: {
+        marginLeft: 8,
     },
 });
-
-export default Weather;
