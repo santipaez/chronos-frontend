@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Button, Modal, Platform } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Button, Modal, Platform, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getSchedulesByDay, createSchedule, updateSchedule, deleteSchedule } from '../components/Schedule';
 import { Edit, Trash } from 'lucide-react-native';
@@ -90,57 +90,72 @@ export default function ScheduleScreen() {
         return `${hours}:${minutes}`;
     };
 
-    const renderDay = ({ item: day }) => (
-        <View>
-            <TouchableOpacity onPress={() => {
-                if (expandedDays.includes(day)) {
-                    setExpandedDays(expandedDays.filter(d => d !== day));
-                } else {
-                    setExpandedDays([...expandedDays, day]);
-                    fetchSchedulesByDay(day);
-                }
-            }}>
-                <View style={styles.dayHeader}>
-                    <Text style={styles.dayTitle}>{day}</Text>
-                    <TouchableOpacity onPress={() => {
-                        setNewSchedule({ ...newSchedule, day });
-                        setModalVisible(true);
-                    }}>
-                        <Text style={styles.addButton}>+</Text>
-                    </TouchableOpacity>
-                </View>
-            </TouchableOpacity>
-            {expandedDays.includes(day) && (
-                <View style={styles.scheduleContainer}>
-                    {schedules[day]?.map(schedule => (
-                        <View key={schedule.id} style={styles.scheduleItem}>
-                            <View style={styles.scheduleActions}>
-                                <TouchableOpacity onPress={() => handleEditSchedule(schedule)}>
-                                    <Edit size={24} color="#007AFF" />
-                                </TouchableOpacity>
+    const renderDay = ({ item: day }) => {
+        const daySchedules = schedules[day] || [];
+        const scheduleCount = daySchedules.length;
+        const scheduleSummary = daySchedules.map(schedule => `${schedule.name}, ${schedule.startTime} a ${schedule.endTime}`).join('\n');
+        const isExpanded = expandedDays.includes(day);
+
+        return (
+            <View style={styles.card}>
+                <TouchableOpacity onPress={() => {
+                    if (isExpanded) {
+                        setExpandedDays(expandedDays.filter(d => d !== day));
+                    } else {
+                        setExpandedDays([...expandedDays, day]);
+                        fetchSchedulesByDay(day);
+                    }
+                }}>
+                    <View style={styles.dayHeader}>
+                        <Text style={styles.dayTitle}>{day} <Text style={styles.scheduleCount}>({scheduleCount})</Text></Text>
+                        <TouchableOpacity onPress={() => {
+                            setNewSchedule({ ...newSchedule, day });
+                            setModalVisible(true);
+                        }}>
+                            <Text style={styles.addButton}>+</Text>
+                        </TouchableOpacity>
+                    </View>
+                </TouchableOpacity>
+                {!isExpanded && scheduleCount > 0 && (
+                    <Text style={styles.scheduleSummary}>{scheduleSummary}</Text>
+                )}
+                {isExpanded && (
+                    <View style={styles.scheduleContainer}>
+                        {daySchedules.map(schedule => (
+                            <View key={schedule.id} style={styles.scheduleItem}>
+                                <View style={styles.scheduleActions}>
+                                    <TouchableOpacity onPress={() => handleEditSchedule(schedule)}>
+                                        <Edit size={24} color="#007AFF" />
+                                    </TouchableOpacity>
+                                </View>
+                                <Text style={styles.scheduleName}>{schedule.name}</Text>
+                                <Text style={styles.scheduleTime}>{`Desde: ${schedule.startTime} - Hasta: ${schedule.endTime}`}</Text>
+                                <Text style={styles.scheduleDescription}>{schedule.description}</Text>
+                                <View style={styles.scheduleActions}>
+                                    <TouchableOpacity onPress={() => handleDeleteSchedule(schedule.id, day)}>
+                                        <Trash size={24} color="#FF3B30" />
+                                    </TouchableOpacity>
+                                </View>
                             </View>
-                            <Text style={styles.scheduleName}>{schedule.name}</Text>
-                            <Text style={styles.scheduleTime}>{`Desde: ${schedule.startTime} - Hasta: ${schedule.endTime}`}</Text>
-                            <Text style={styles.scheduleDescription}>{schedule.description}</Text>
-                            <View style={styles.scheduleActions}>
-                                <TouchableOpacity onPress={() => handleDeleteSchedule(schedule.id, day)}>
-                                    <Trash size={24} color="#FF3B30" />
-                                </TouchableOpacity>
-                            </View>
-                        </View>
-                    ))}
-                </View>
-            )}
-        </View>
-    );
+                        ))}
+                    </View>
+                )}
+            </View>
+        );
+    };
 
     return (
         <View style={styles.container}>
-            <Text style={styles.title}>Aquí puedes gestionar tus horarios</Text>
             <FlatList
                 data={daysOfWeek}
                 renderItem={renderDay}
                 keyExtractor={(item) => item}
+                contentContainerStyle={styles.listContent}
+                ListHeaderComponent={() => (
+                    <View style={styles.header}>
+                        <Text style={styles.headerTitle}>Gestiona tus horarios</Text>
+                    </View>
+                )}
             />
             <Modal
                 animationType="slide"
@@ -199,29 +214,38 @@ export default function ScheduleScreen() {
 const styles = StyleSheet.create({
     container: {
         flex: 1,
-        padding: 16,
         backgroundColor: '#f5f5f5',
     },
-    title: {
-        fontSize: 18,
+    header: {
+        backgroundColor: '#007AFF',
+        padding: 16,
+        alignItems: 'center',
+        justifyContent: 'center',
         marginBottom: 16,
-        textAlign: 'center',
-        color: '#333',
-        borderRadius: 5,
-        borderColor: '#cdcdcd',
-        borderWidth: 1,
-        padding: 10,
+    },
+    headerTitle: {
+        color: '#fff',
+        fontSize: 20,
+        fontWeight: 'bold',
+    },
+    listContent: {
+        padding: 16,
+    },
+    card: {
+        backgroundColor: '#fff',
+        borderRadius: 10,
+        padding: 16,
+        marginBottom: 16,
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 2,
     },
     dayHeader: {
         flexDirection: 'row',
         justifyContent: 'space-between',
         alignItems: 'center',
-        borderColor: '#cdcdcd',
-        borderWidth: 1,
-        padding: 10,
-        marginVertical: 8,
-        backgroundColor: '#fff',
-        borderRadius: 5,
     },
     dayTitle: {
         fontSize: 20,
@@ -232,13 +256,10 @@ const styles = StyleSheet.create({
         color: '#007AFF',
     },
     scheduleContainer: {
-        padding: 10,
-        backgroundColor: '#e9e9e9',
-        borderRadius: 5,
-        marginVertical: 8,
+        marginTop: 16,
     },
     scheduleItem: {
-        backgroundColor: '#ffffff',
+        backgroundColor: '#f9f9f9',
         padding: 10,
         borderRadius: 5,
         marginBottom: 10,
@@ -309,5 +330,14 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         width: '100%',
         marginTop: 16,
+    },
+    scheduleSummary: {
+        padding: 10,
+        color: '#555',
+        fontSize: 16,
+    },
+    scheduleCount: {
+        color: '#888',
+        fontSize: 14,
     },
 });
