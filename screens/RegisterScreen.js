@@ -16,10 +16,9 @@ const RegisterScreen = () => {
 
     useFocusEffect(
         React.useCallback(() => {
-            // Reiniciar el estado del error y éxito cuando la pantalla gana el foco
             setError('');
             setSuccess('');
-            animatedFormValue.value = 0; // Reiniciar el valor de la animación
+            animatedFormValue.value = 0;
             animatedFormValue.value = withTiming(1, {
                 duration: 1500,
                 easing: Easing.out(Easing.exp),
@@ -27,16 +26,46 @@ const RegisterScreen = () => {
         }, [])
     );
 
+    const validateEmail = (email) => {
+        const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+        return re.test(String(email).toLowerCase());
+    };
+
+    const validatePassword = (password) => {
+        const re = /^(?=.*[A-Z])(?=.*\d).{6,}$/;
+        return re.test(password);
+    };
+
+    const validateUsername = (username) => {
+        return username.length >= 6;
+    };
+
     const onRegister = async (username, email, password, setError, setSuccess, navigation) => {
         setError('');
         setSuccess('');
+
+        if (!validateUsername(username)) {
+            setError('El nombre de usuario debe tener al menos 6 caracteres.');
+            return;
+        }
+
+        if (!validateEmail(email)) {
+            setError('El correo electrónico no es válido.');
+            return;
+        }
+
+        if (!validatePassword(password)) {
+            setError('La contraseña debe tener al menos 6 caracteres, una letra mayúscula y un número.');
+            return;
+        }
+
         try {
             const response = await handleRegister(username, email, password);
             if (response.status === 200) {
                 setSuccess('Cuenta creada exitosamente. Redirigiendo al login...');
                 setTimeout(() => {
                     navigation.navigate('LoginScreen');
-                }, 2000); // Espera 2 segundos antes de redirigir al login
+                }, 2000);
             } else {
                 setError('Registro fallido');
             }

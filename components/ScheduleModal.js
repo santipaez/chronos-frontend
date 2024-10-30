@@ -1,4 +1,3 @@
-// chronos-frontend/components/ScheduleModal.js
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, Platform, Modal, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';

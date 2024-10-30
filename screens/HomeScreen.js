@@ -5,12 +5,11 @@ import { useTheme, useFocusEffect } from '@react-navigation/native';
 import { getEvents, getSchedules } from '../API';
 import { ChevronLeft, ChevronRight, Edit } from 'lucide-react-native';
 import moment from 'moment';
-import 'moment/locale/es'; // Importar el idioma español para moment.js
+import 'moment/locale/es';
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { fetchCityFromCoords } from '../API';
 
-// Configurar la localización en español
 LocaleConfig.locales['es'] = {
   monthNames: ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'],
   monthNamesShort: ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'],
@@ -53,14 +52,12 @@ export default function HomeScreen({ navigation }) {
   useEffect(() => {
     fetchSchedulesAndEvents();
 
-    // Ejecutar la animación de desvanecimiento
     Animated.timing(fadeAnim, {
       toValue: 1,
       duration: 1000,
       useNativeDriver: true,
     }).start();
 
-    // Solicitar permisos de ubicación y obtener la ubicación
     (async () => {
       let { status } = await Location.requestForegroundPermissionsAsync();
       if (status !== 'granted') {
@@ -85,20 +82,18 @@ export default function HomeScreen({ navigation }) {
     return moment(date).locale('es').format('dddd, D [de] MMMM');
   };
 
-  // Ordenar horarios de lunes a domingo
   const daysOfWeekOrder = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
   const sortedSchedules = schedules.sort((a, b) => {
     return daysOfWeekOrder.indexOf(a.day) - daysOfWeekOrder.indexOf(b.day);
   });
 
-  // Ordenar eventos por fecha
   const sortedEvents = events.sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: colors.background }]}>
       <ScrollView style={styles.content}>
         <Calendar
-          key={dark} // Forzar re-renderización cuando cambie el tema
+          key={dark}
           style={[styles.calendar, { borderColor: dark ? '#ccc' : '#ccc' }]}
           markedDates={markedDates}
           onDayPress={(day) => {

@@ -3,7 +3,6 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SCHEDULE_URL, AUTH_URL, EVENT_URL, WEATHER_URL, FORECAST_URL } from './config';
 import moment from 'moment';
 
-// Weather.js
 export const fetchTemperature = async (date) => {
     try {
         const storedCity = await AsyncStorage.getItem('@selected_city');
@@ -62,7 +61,6 @@ export const fetchCityFromCoords = async (lat, lon) => {
     }
 };
 
-// Schedule.js
 const getHeaders = async () => {
     const token = await AsyncStorage.getItem('@jwt_token');
     return {
@@ -143,7 +141,6 @@ export const deleteSchedule = async (id) => {
     }
 };
 
-// Register.js
 export const handleRegister = async (username, email, password) => {
     try {
         const response = await axios.post(`${AUTH_URL}/register`, {
@@ -157,7 +154,6 @@ export const handleRegister = async (username, email, password) => {
     }
 };
 
-// Login.js
 export const handleLogin = async (username, password) => {
     try {
         const response = await axios.post(`${AUTH_URL}/login`, {
@@ -168,7 +164,7 @@ export const handleLogin = async (username, password) => {
                 'Content-Type': 'application/json'
             }
         });
-        const { token, userId } = response.data; 
+        const { token, userId } = response.data;
         await AsyncStorage.setItem('@jwt_token', token);
         await AsyncStorage.setItem('@user_id', userId.toString());
         return response;
@@ -177,7 +173,6 @@ export const handleLogin = async (username, password) => {
     }
 };
 
-// Event.js
 export const getEvents = async () => {
     try {
         const headers = await getHeaders();

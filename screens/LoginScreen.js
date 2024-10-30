@@ -13,10 +13,9 @@ const LoginScreen = ({ navigation }) => {
 
     useFocusEffect(
         React.useCallback(() => {
-            // Reiniciar el estado del error y éxito cuando la pantalla gana el foco
             setError('');
             setSuccess('');
-            animatedFormValue.value = 0; // Reiniciar el valor de la animación
+            animatedFormValue.value = 0;
             animatedFormValue.value = withTiming(1, {
                 duration: 1500,
                 easing: Easing.out(Easing.exp),
@@ -30,7 +29,6 @@ const LoginScreen = ({ navigation }) => {
         try {
             const response = await handleLogin(username, password);
             if (response.status === 200) {
-                // Manejar el éxito del login, por ejemplo, navegar a otra pantalla
                 navigation.navigate('HomeScreen');
             } else {
                 setError('La contraseña o el usuario son incorrectos');

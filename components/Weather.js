@@ -1,4 +1,3 @@
-// chronos-frontend/components/Weather.js
 import React from 'react';
 import { StyleSheet } from 'react-native';
 import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning } from 'lucide-react-native';
@@ -6,7 +5,7 @@ import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning } from 'lucide-react-n
 export const getWeatherIcon = (weather) => {
     switch (weather) {
         case 'Clear':
-            return <Sun size={24} color="#FFA500" style={styles.weatherIcon} />; // Color más oscuro
+            return <Sun size={24} color="#FFA500" style={styles.weatherIcon} />;
         case 'Clouds':
             return <Cloud size={24} color="#B0C4DE" style={styles.weatherIcon} />;
         case 'Rain':

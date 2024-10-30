@@ -15,7 +15,6 @@ import DrawerContent from './components/DrawerContent';
 import OptionsScreen from './screens/OptionsScreen';
 import LogoutScreen from './screens/LogoutScreen';
 
-
 const Tab = createBottomTabNavigator();
 const Drawer = createDrawerNavigator();
 

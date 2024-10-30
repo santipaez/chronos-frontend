@@ -1,4 +1,3 @@
-// chronos-frontend/components/EventList.js
 import React from 'react';
 import { View, Text, TouchableOpacity, FlatList } from 'react-native';
 import { Edit, Trash } from 'lucide-react-native';

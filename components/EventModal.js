@@ -1,4 +1,3 @@
-// EventModal.js
 import React from 'react';
 import { View, TextInput, TouchableOpacity, Text, Platform, Modal, StyleSheet } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
@@ -74,7 +73,7 @@ export const EventModal = ({
 
 export const ViewEventModal = ({ visible, onClose, selectedEvent, temperatures, formatDate, colors, styles }) => {
     if (!selectedEvent) {
-        return null; // O muestra un mensaje de error o un componente vacío
+        return null;
     }
 
     const temperature = temperatures[selectedEvent.date] && typeof temperatures[selectedEvent.date].temp === 'number'

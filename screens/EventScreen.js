@@ -7,7 +7,7 @@ import { useFocusEffect, useTheme } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import 'moment/locale/es';
-import { requestNotificationPermissions, scheduleNotification } from '../notifications';
+import { requestNotificationPermissions, scheduleNotification } from '../components/Notifications';
 import { getWeatherIcon } from '../components/Weather';
 import { EventModal, ViewEventModal } from '../components/EventModal';
 
@@ -57,7 +57,7 @@ const EventScreen = ({ navigation }) => {
             console.error('Error al obtener los eventos:', error);
         }
     };
-    
+
     const fetchTemperatures = async (events) => {
         const newTemperatures = {};
         for (const event of events) {
@@ -66,7 +66,7 @@ const EventScreen = ({ navigation }) => {
         }
         setTemperatures(newTemperatures);
     };
-    
+
     const handleCreateEvent = async () => {
         try {
             const event = { name, description, date: selectedDate, startTime: startTime.toTimeString().substring(0, 5) };
@@ -77,12 +77,11 @@ const EventScreen = ({ navigation }) => {
                 await createEvent(event);
             }
             setModalVisible(false);
-            setSelectedDate(''); // Restablecer la fecha seleccionada
-            fetchEvents(); // Refrescar la lista de eventos
+            setSelectedDate('');
+            fetchEvents();
 
-            // Programar notificación
             const eventDateTime = new Date(`${selectedDate}T${startTime.toTimeString().substring(0, 5)}:00`);
-            const notificationDateTime = new Date(eventDateTime.getTime() - notificationHours * 60 * 60 * 1000); // Horas antes configuradas
+            const notificationDateTime = new Date(eventDateTime.getTime() - notificationHours * 60 * 60 * 1000);
             await scheduleNotification(
                 'Recordatorio de Evento',
                 `Tienes un evento mañana: ${name}\nA las: ${startTime.toTimeString().substring(0, 5)}`,
@@ -96,7 +95,7 @@ const EventScreen = ({ navigation }) => {
     const handleDeleteEvent = async (id) => {
         try {
             await deleteEvent(id);
-            fetchEvents(); // Refrescar la lista de eventos
+            fetchEvents();
         } catch (error) {
             console.error('Error al eliminar el evento:', error);
         }
@@ -163,8 +162,8 @@ const EventScreen = ({ navigation }) => {
                 ListHeaderComponent={
                     <>
                         <Calendar
-                            key={dark} // Forzar re-renderización cuando cambie el tema
-                            style={[styles.calendar, { borderColor: dark ? '#ccc' : '#ccc' }]} // Añadir estilo aquí
+                            key={dark}
+                            style={[styles.calendar, { borderColor: dark ? '#ccc' : '#ccc' }]}
                             onDayPress={(day) => {
                                 const today = moment().startOf('day');
                                 const selectedDay = moment(day.dateString).startOf('day');
@@ -244,7 +243,7 @@ const EventScreen = ({ navigation }) => {
                 visible={modalVisible}
                 onClose={() => {
                     setModalVisible(false);
-                    setSelectedDate(''); // Restablecer la fecha seleccionada
+                    setSelectedDate('');
                     setEditingEvent(null);
                     setName('');
                     setDescription('');
@@ -282,7 +281,7 @@ const styles = StyleSheet.create({
     },
     calendar: {
         marginBottom: 10,
-        borderWidth: 2, // Añadir borde
+        borderWidth: 2,
     },
     dividerContainer: {
         padding: 16,
