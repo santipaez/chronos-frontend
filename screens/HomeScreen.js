@@ -19,7 +19,7 @@ LocaleConfig.locales['es'] = {
 LocaleConfig.defaultLocale = 'es';
 
 export default function HomeScreen({ navigation }) {
-  const { colors } = useTheme();
+  const { colors, dark } = useTheme();
   const fadeAnim = useRef(new Animated.Value(0)).current;
   const [schedules, setSchedules] = useState([]);
   const [events, setEvents] = useState([]);
@@ -47,6 +47,10 @@ export default function HomeScreen({ navigation }) {
     }).start();
   }, []);
 
+  useEffect(() => {
+    // Este useEffect se ejecutará cada vez que cambie el tema
+  }, [colors, dark]);
+
   const markedDates = events.reduce((acc, event) => {
     acc[event.date] = { marked: true, dotColor: 'green', textColor: 'green' };
     return acc;
@@ -60,7 +64,8 @@ export default function HomeScreen({ navigation }) {
     <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: colors.background }]}>
       <ScrollView style={styles.content}>
         <Calendar
-          style={styles.calendar}
+          key={dark} // Forzar re-renderización cuando cambie el tema
+          style={[styles.calendar, { borderColor: dark ? '#ccc' : '#ccc' }]}
           markedDates={markedDates}
           onDayPress={(day) => {
             const event = events.find(e => e.date === day.dateString);
@@ -73,14 +78,50 @@ export default function HomeScreen({ navigation }) {
             backgroundColor: colors.background,
             calendarBackground: colors.background,
             textSectionTitleColor: colors.text,
-            selectedDayBackgroundColor: '#007AFF',
+            selectedDayBackgroundColor: colors.primary,
             selectedDayTextColor: '#ffffff',
-            todayTextColor: '#007AFF',
+            todayTextColor: colors.primary,
             dayTextColor: colors.text,
             textDisabledColor: colors.border,
+            dotColor: 'green',
+            selectedDotColor: 'green',
+            'stylesheet.calendar.header': {
+              arrow: {
+                padding: 10,
+              },
+              monthText: {
+                fontSize: 20,
+                fontWeight: 'bold',
+                color: colors.text,
+              },
+            },
+            'stylesheet.day.basic': {
+              base: {
+                width: 32,
+                height: 32,
+                alignItems: 'center',
+                justifyContent: 'center',
+              },
+              text: {
+                marginTop: 6,
+                fontSize: 16,
+                color: colors.text,
+              },
+              today: {
+                borderRadius: 16,
+              },
+              selected: {
+                backgroundColor: colors.primary,
+                borderRadius: 16,
+              },
+              marked: {
+                dotColor: 'green',
+                textColor: 'green',
+              },
+            },
           }}
         />
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={[styles.eventsContainer, { backgroundColor: colors.card }]}>
           <View style={styles.header}>
             <Text style={[styles.eventsTitle, { color: colors.text }]}>Próximos Horarios</Text>
@@ -95,14 +136,14 @@ export default function HomeScreen({ navigation }) {
               activeOpacity={0.5}
             >
               <View>
-                <Text style={styles.eventTitle}>{schedule.name}</Text>
-                <Text style={[styles.eventTime, { color: colors.textSecondary }]}>De {schedule.startTime} a {schedule.endTime}</Text>
-                <Text style={[styles.eventDate, { color: colors.textSecondary }]}>Todos los {schedule.day}</Text>
+                <Text style={[styles.eventTitle, { color: colors.text }]}>{schedule.name}</Text>
+                <Text style={[styles.eventTime, { color: colors.text }]}>{`De ${schedule.startTime} a ${schedule.endTime}`}</Text>
+                <Text style={[styles.eventDate, { color: colors.text }]}>{`Todos los ${schedule.day}`}</Text>
               </View>
             </TouchableOpacity>
           ))}
         </View>
-        <View style={styles.divider} />
+        <View style={[styles.divider, { backgroundColor: colors.border }]} />
         <View style={[styles.eventsContainer, { backgroundColor: colors.card }]}>
           <View style={styles.header}>
             <Text style={[styles.eventsTitle, { color: colors.text }]}>Próximos Eventos</Text>
@@ -121,9 +162,9 @@ export default function HomeScreen({ navigation }) {
               }}
             >
               <View>
-                <Text style={styles.eventTitle}>{event.name}</Text>
-                <Text style={[styles.eventTime, { color: colors.textSecondary }]}>{event.startTime}</Text>
-                <Text style={[styles.eventDate, { color: colors.textSecondary }]}>{formatDate(event.date)}</Text>
+                <Text style={[styles.eventTitle, { color: colors.text }]}>{event.name}</Text>
+                <Text style={[styles.eventTime, { color: colors.text }]}>{event.startTime}</Text>
+                <Text style={[styles.eventDate, { color: colors.text }]}>{formatDate(event.date)}</Text>
               </View>
             </TouchableOpacity>
           ))}
@@ -136,13 +177,13 @@ export default function HomeScreen({ navigation }) {
         onRequestClose={() => setEventModalVisible(false)}
       >
         <View style={styles.modalContainer}>
-          <View style={styles.modalView}>
+          <View style={[styles.modalView, { backgroundColor: colors.card }]}>
             {selectedEvent && (
               <>
-                <Text style={styles.modalTitle}>{selectedEvent.name}</Text>
-                <Text style={styles.eventDescription}>{selectedEvent.description}</Text>
-                <Text style={styles.eventTime}>{selectedEvent.startTime}</Text>
-                <Text style={styles.eventDate}>{formatDate(selectedEvent.date)}</Text>
+                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedEvent.name}</Text>
+                <Text style={[styles.eventDescription, { color: colors.text }]}>{selectedEvent.description}</Text>
+                <Text style={[styles.eventTime, { color: colors.text }]}>{selectedEvent.startTime}</Text>
+                <Text style={[styles.eventDate, { color: colors.text }]}>{formatDate(selectedEvent.date)}</Text>
                 <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setEventModalVisible(false)}>
                   <Text style={styles.buttonText}>Cerrar</Text>
                 </TouchableOpacity>
@@ -164,10 +205,19 @@ const styles = StyleSheet.create({
   },
   calendar: {
     marginBottom: 10,
+    width: '95%',
+    alignSelf: 'center',
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    borderRadius: 8,
+    borderColor: '#ccc',
+    borderWidth: 2,
   },
   divider: {
     height: 2,
-    backgroundColor: '#e0e0e0',
     marginVertical: 20,
     width: '80%',
     alignSelf: 'center',
@@ -177,6 +227,14 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     margin: 16,
     marginTop: 0,
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 2,
+    borderRadius: 8,
+    borderColor: '#ccc',
+    borderWidth: 2,
   },
   header: {
     flexDirection: 'row',
@@ -194,7 +252,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#e0e0e0',
+    borderBottomColor: '#ccc',
   },
   eventTitle: {
     fontSize: 16,
@@ -214,7 +272,6 @@ const styles = StyleSheet.create({
   },
   modalView: {
     width: '90%',
-    backgroundColor: 'white',
     borderRadius: 10,
     padding: 20,
     alignItems: 'center',
@@ -231,7 +288,6 @@ const styles = StyleSheet.create({
   },
   eventDescription: {
     fontSize: 14,
-    color: '#555',
     marginVertical: 4,
   },
   button: {
