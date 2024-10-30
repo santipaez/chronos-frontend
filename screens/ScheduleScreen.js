@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Button, Modal, Platform, ScrollView } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { getSchedulesByDay, createSchedule, updateSchedule, deleteSchedule } from '../components/Schedule';
+import { getSchedulesByDay, createSchedule, updateSchedule, deleteSchedule } from '../API';
 import { Edit, Trash } from 'lucide-react-native';
 import { useTheme } from '@react-navigation/native';
 import ScheduleModal from '../components/ScheduleModal';

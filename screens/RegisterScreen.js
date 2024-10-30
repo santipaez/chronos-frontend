@@ -3,7 +3,7 @@ import { View, TextInput, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingVi
 import { useFocusEffect, useNavigation } from '@react-navigation/native';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
 import { ArrowLeft } from 'lucide-react-native';
-import { onRegister } from '../components/Register';
+import { handleRegister } from '../API';
 
 const RegisterScreen = () => {
     const [username, setUsername] = useState('');
@@ -26,6 +26,24 @@ const RegisterScreen = () => {
             });
         }, [])
     );
+
+    const onRegister = async (username, email, password, setError, setSuccess, navigation) => {
+        setError('');
+        setSuccess('');
+        try {
+            const response = await handleRegister(username, email, password);
+            if (response.status === 200) {
+                setSuccess('Cuenta creada exitosamente. Redirigiendo al login...');
+                setTimeout(() => {
+                    navigation.navigate('LoginScreen');
+                }, 2000); // Espera 2 segundos antes de redirigir al login
+            } else {
+                setError('Registro fallido');
+            }
+        } catch (err) {
+            setError('Registro fallido');
+        }
+    };
 
     const formAnimatedStyle = useAnimatedStyle(() => {
         return {

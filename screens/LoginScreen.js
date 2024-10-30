@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { View, TextInput, Text, StyleSheet, TouchableOpacity, KeyboardAvoidingView, Platform, ScrollView } from 'react-native';
 import { useFocusEffect } from '@react-navigation/native';
 import Animated, { Easing, useSharedValue, useAnimatedStyle, withTiming } from 'react-native-reanimated';
-import { onLogin } from '../components/Login';
+import { handleLogin } from '../API';
 
 const LoginScreen = ({ navigation }) => {
     const [username, setUsername] = useState('');
@@ -23,6 +23,22 @@ const LoginScreen = ({ navigation }) => {
             });
         }, [])
     );
+
+    const onLogin = async (username, password, setError, setSuccess, navigation) => {
+        setError('');
+        setSuccess('');
+        try {
+            const response = await handleLogin(username, password);
+            if (response.status === 200) {
+                // Manejar el éxito del login, por ejemplo, navegar a otra pantalla
+                navigation.navigate('HomeScreen');
+            } else {
+                setError('La contraseña o el usuario son incorrectos');
+            }
+        } catch (err) {
+            setError('La contraseña o el usuario son incorrectos');
+        }
+    };
 
     const formAnimatedStyle = useAnimatedStyle(() => {
         return {

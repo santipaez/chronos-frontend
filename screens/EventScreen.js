@@ -1,14 +1,14 @@
 import React, { useState, useEffect } from 'react';
 import { View, StyleSheet, Modal, TouchableOpacity, Text, FlatList, Platform } from 'react-native';
 import { Calendar } from 'react-native-calendars';
-import { createEvent, getEvents, updateEvent, deleteEvent } from '../components/Event';
+import { createEvent, getEvents, updateEvent, deleteEvent, fetchTemperature } from '../API';
 import { ChevronLeft, ChevronRight, Edit, Trash } from 'lucide-react-native';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
 import 'moment/locale/es';
 import { requestNotificationPermissions, scheduleNotification } from '../notifications';
-import { fetchTemperature, getWeatherIcon } from '../components/Weather';
+import { getWeatherIcon } from '../components/Weather';
 import { EventModal, ViewEventModal } from '../components/EventModal';
 
 const EventScreen = ({ navigation }) => {

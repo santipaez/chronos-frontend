@@ -2,14 +2,13 @@ import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity, Modal } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
 import { useTheme, useFocusEffect } from '@react-navigation/native';
-import { getSchedules } from '../components/Schedule';
-import { getEvents } from '../components/Event';
+import { getEvents, getSchedules } from '../API';
 import { ChevronLeft, ChevronRight, Edit } from 'lucide-react-native';
 import moment from 'moment';
 import 'moment/locale/es'; // Importar el idioma español para moment.js
 import * as Location from 'expo-location';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { fetchCityFromCoords } from '../components/Weather';
+import { fetchCityFromCoords } from '../API';
 
 // Configurar la localización en español
 LocaleConfig.locales['es'] = {
