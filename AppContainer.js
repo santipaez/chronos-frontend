@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { NavigationContainer, DefaultTheme, DarkTheme } from '@react-navigation/native';
 import { createDrawerNavigator } from '@react-navigation/drawer';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { Home, Calendar, Clock, PlusCircle, Menu, ArrowLeft } from 'lucide-react-native';
+import { Home, Calendar, Clock, PlusCircle, Menu, ArrowLeft, Sun } from 'lucide-react-native';
 import { TouchableOpacity } from 'react-native';
 
 import WelcomeScreen from './screens/WelcomeScreen';
@@ -11,6 +11,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import ScheduleScreen from './screens/ScheduleScreen';
 import EventScreen from './screens/EventScreen';
+import WeatherScreen from './screens/WeatherScreen';
 import DrawerContent from './components/DrawerContent';
 import ProfileScreen from './screens/ProfileScreen';
 import OptionsScreen from './screens/OptionsScreen';
@@ -35,8 +36,9 @@ function TabNavigator({ isDarkMode }) {
                         icon = <Clock color={color} size={size} />;
                     } else if (route.name === 'Agendar') {
                         icon = <PlusCircle color={color} size={size} />;
+                    } else if (route.name === 'Clima') { // Nueva pestaña
+                        icon = <Sun color={color} size={size} />;
                     }
-
                     return icon;
                 },
                 tabBarActiveTintColor: '#007AFF',
@@ -68,6 +70,17 @@ function TabNavigator({ isDarkMode }) {
             <Tab.Screen
                 name="Agendar"
                 component={EventScreen}
+                options={({ navigation }) => ({
+                    headerLeft: () => (
+                        <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
+                            <Menu color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
+                        </TouchableOpacity>
+                    ),
+                })}
+            />
+            <Tab.Screen
+                name="Clima" // Nueva pestaña
+                component={WeatherScreen}
                 options={({ navigation }) => ({
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
