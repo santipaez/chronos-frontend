@@ -10,7 +10,7 @@ import LoginScreen from './screens/LoginScreen';
 import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import ScheduleScreen from './screens/ScheduleScreen';
-import AddEventScreen from './components/AddEventScreen';
+import EventScreen from './screens/EventScreen';
 import DrawerContent from './components/DrawerContent';
 import ProfileScreen from './screens/ProfileScreen';
 import OptionsScreen from './screens/OptionsScreen';
@@ -67,7 +67,7 @@ function TabNavigator({ isDarkMode }) {
             />
             <Tab.Screen
                 name="Agendar"
-                component={AddEventScreen}
+                component={EventScreen}
                 options={({ navigation }) => ({
                     headerLeft: () => (
                         <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
