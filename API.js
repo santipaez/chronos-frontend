@@ -1,6 +1,6 @@
 import axios from 'axios';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { SCHEDULE_URL, AUTH_URL, EVENT_URL } from './config';
+import { SCHEDULE_URL, AUTH_URL, EVENT_URL, WEATHER_URL, FORECAST_URL } from './config';
 import moment from 'moment';
 
 // Weather.js
@@ -12,7 +12,7 @@ export const fetchTemperature = async (date) => {
 
         const { lat, lon } = city.coord;
 
-        const response = await axios.get(`http://192.168.100.30:8080/forecast?lat=${lat}&lon=${lon}`, {
+        const response = await axios.get(`${FORECAST_URL}?lat=${lat}&lon=${lon}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
@@ -49,7 +49,7 @@ export const fetchTemperature = async (date) => {
 export const fetchCityFromCoords = async (lat, lon) => {
     try {
         const token = await AsyncStorage.getItem('@jwt_token');
-        const response = await axios.get(`http://192.168.100.30:8080/weather?lat=${lat}&lon=${lon}`, {
+        const response = await axios.get(`${WEATHER_URL}?lat=${lat}&lon=${lon}`, {
             headers: {
                 'Authorization': `Bearer ${token}`,
                 'Content-Type': 'application/json'
