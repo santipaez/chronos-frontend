@@ -1,12 +1,15 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, Animated, TouchableOpacity, Modal } from 'react-native';
 import { Calendar, LocaleConfig } from 'react-native-calendars';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, useFocusEffect } from '@react-navigation/native';
 import { getSchedules } from '../components/Schedule';
 import { getEvents } from '../components/Event';
-import { Edit, Trash } from 'lucide-react-native';
+import { ChevronLeft, ChevronRight, Edit } from 'lucide-react-native';
 import moment from 'moment';
 import 'moment/locale/es'; // Importar el idioma español para moment.js
+import * as Location from 'expo-location';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { fetchCityFromCoords } from '../components/Weather';
 
 // Configurar la localización en español
 LocaleConfig.locales['es'] = {
@@ -26,18 +29,30 @@ export default function HomeScreen({ navigation }) {
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [eventModalVisible, setEventModalVisible] = useState(false);
 
-  useEffect(() => {
-    getSchedules()
-      .then(data => setSchedules(data))
-      .catch(error => {
-        console.error('Error al obtener los horarios:', error);
-      });
+  const fetchSchedulesAndEvents = async () => {
+    try {
+      const schedulesData = await getSchedules();
+      setSchedules(schedulesData);
+    } catch (error) {
+      console.error('Error al obtener los horarios:', error);
+    }
 
-    getEvents()
-      .then(data => setEvents(data))
-      .catch(error => {
-        console.error('Error al obtener los eventos:', error);
-      });
+    try {
+      const eventsData = await getEvents();
+      setEvents(eventsData);
+    } catch (error) {
+      console.error('Error al obtener los eventos:', error);
+    }
+  };
+
+  useFocusEffect(
+    React.useCallback(() => {
+      fetchSchedulesAndEvents();
+    }, [])
+  );
+
+  useEffect(() => {
+    fetchSchedulesAndEvents();
 
     // Ejecutar la animación de desvanecimiento
     Animated.timing(fadeAnim, {
@@ -45,11 +60,22 @@ export default function HomeScreen({ navigation }) {
       duration: 1000,
       useNativeDriver: true,
     }).start();
-  }, []);
 
-  useEffect(() => {
-    // Este useEffect se ejecutará cada vez que cambie el tema
-  }, [colors, dark]);
+    // Solicitar permisos de ubicación y obtener la ubicación
+    (async () => {
+      let { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        alert('Permiso de ubicación denegado');
+        return;
+      }
+
+      let location = await Location.getCurrentPositionAsync({});
+      const { latitude, longitude } = location.coords;
+      const city = await fetchCityFromCoords(latitude, longitude);
+      await AsyncStorage.setItem('@selected_city', JSON.stringify(city));
+      await AsyncStorage.setItem('@coords', JSON.stringify({ latitude, longitude }));
+    })();
+  }, []);
 
   const markedDates = events.reduce((acc, event) => {
     acc[event.date] = { marked: true, dotColor: 'green', textColor: 'green' };
@@ -59,6 +85,15 @@ export default function HomeScreen({ navigation }) {
   const formatDate = (date) => {
     return moment(date).locale('es').format('dddd, D [de] MMMM');
   };
+
+  // Ordenar horarios de lunes a domingo
+  const daysOfWeekOrder = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
+  const sortedSchedules = schedules.sort((a, b) => {
+    return daysOfWeekOrder.indexOf(a.day) - daysOfWeekOrder.indexOf(b.day);
+  });
+
+  // Ordenar eventos por fecha
+  const sortedEvents = events.sort((a, b) => new Date(a.date) - new Date(b.date));
 
   return (
     <Animated.View style={[styles.container, { opacity: fadeAnim, backgroundColor: colors.background }]}>
@@ -74,6 +109,9 @@ export default function HomeScreen({ navigation }) {
               setEventModalVisible(true);
             }
           }}
+          renderArrow={(direction) => (
+            direction === 'left' ? <ChevronLeft size={30} color={colors.primary} /> : <ChevronRight size={30} color={colors.primary} />
+          )}
           theme={{
             backgroundColor: colors.background,
             calendarBackground: colors.background,
@@ -129,7 +167,7 @@ export default function HomeScreen({ navigation }) {
               <Edit color={colors.text} size={24} />
             </TouchableOpacity>
           </View>
-          {schedules.map((schedule) => (
+          {sortedSchedules.map((schedule) => (
             <TouchableOpacity
               key={schedule.id}
               style={styles.eventItem}
@@ -151,7 +189,7 @@ export default function HomeScreen({ navigation }) {
               <Edit color={colors.text} size={24} />
             </TouchableOpacity>
           </View>
-          {events.map((event) => (
+          {sortedEvents.map((event) => (
             <TouchableOpacity
               key={event.id}
               style={styles.eventItem}

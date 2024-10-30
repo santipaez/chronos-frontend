@@ -4,6 +4,7 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import { getSchedulesByDay, createSchedule, updateSchedule, deleteSchedule } from '../components/Schedule';
 import { Edit, Trash } from 'lucide-react-native';
 import { useTheme } from '@react-navigation/native';
+import ScheduleModal from '../components/ScheduleModal';
 
 const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
 
@@ -67,8 +68,8 @@ export default function ScheduleScreen() {
         setNewSchedule({
             name: schedule.name,
             description: schedule.description,
-            startTime: new Date(`1970-01-01T${schedule.startTime}:00`), // Convertir a objeto Date
-            endTime: new Date(`1970-01-01T${schedule.endTime}:00`), // Convertir a objeto Date
+            startTime: new Date(`1970-01-01T${schedule.startTime}:00`),
+            endTime: new Date(`1970-01-01T${schedule.endTime}:00`),
             day: schedule.day,
         });
         setEditingSchedule(schedule);
@@ -183,58 +184,22 @@ export default function ScheduleScreen() {
                     </View>
                 )}
             />
-            <Modal
-                animationType="slide"
-                transparent={true}
+            <ScheduleModal
                 visible={modalVisible}
-                onRequestClose={() => setModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>{editingSchedule ? 'Editar Horario' : 'Añadir Horario'}</Text>
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-                            placeholder="Nombre"
-                            placeholderTextColor={colors.textSecondary}
-                            value={newSchedule.name}
-                            onChangeText={(text) => setNewSchedule({ ...newSchedule, name: text })}
-                        />
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border }]}
-                            placeholder="Descripción"
-                            placeholderTextColor={colors.textSecondary}
-                            value={newSchedule.description}
-                            onChangeText={(text) => setNewSchedule({ ...newSchedule, description: text })}
-                        />
-                        <TouchableOpacity onPress={() => setShowStartTimePicker(true)}>
-                            <Text style={[styles.input, { color: colors.text, borderColor: colors.border }]}>{`Desde: ${formatTime(newSchedule.startTime)}`}</Text>
-                        </TouchableOpacity>
-                        {showStartTimePicker && (
-                            <DateTimePicker
-                                value={newSchedule.startTime}
-                                mode="time"
-                                display="default"
-                                onChange={handleStartTimeChange}
-                            />
-                        )}
-                        <TouchableOpacity onPress={() => setShowEndTimePicker(true)}>
-                            <Text style={[styles.input, { color: colors.text, borderColor: colors.border }]}>{`Hasta: ${formatTime(newSchedule.endTime)}`}</Text>
-                        </TouchableOpacity>
-                        {showEndTimePicker && (
-                            <DateTimePicker
-                                value={newSchedule.endTime}
-                                mode="time"
-                                display="default"
-                                onChange={handleEndTimeChange}
-                            />
-                        )}
-                        <View style={styles.buttonContainer}>
-                            <Button title={editingSchedule ? 'Guardar Cambios' : 'Añadir Horario'} onPress={handleAddSchedule} />
-                            <Button title="Cancelar" onPress={() => setModalVisible(false)} />
-                        </View>
-                    </View>
-                </View>
-            </Modal>
+                onClose={() => setModalVisible(false)}
+                onSave={handleAddSchedule}
+                editingSchedule={editingSchedule}
+                newSchedule={newSchedule}
+                setNewSchedule={setNewSchedule}
+                showStartTimePicker={showStartTimePicker}
+                setShowStartTimePicker={setShowStartTimePicker}
+                showEndTimePicker={showEndTimePicker}
+                setShowEndTimePicker={setShowEndTimePicker}
+                handleStartTimeChange={handleStartTimeChange}
+                handleEndTimeChange={handleEndTimeChange}
+                formatTime={formatTime}
+                colors={colors}
+            />
             <Modal
                 animationType="slide"
                 transparent={true}
@@ -242,10 +207,10 @@ export default function ScheduleScreen() {
                 onRequestClose={() => setConfirmDeleteModalVisible(false)}
             >
                 <View style={styles.modalContainer}>
-                    <View style={[styles.modalContent, { backgroundColor: colors.card }]}>
+                    <View style={[styles.modalView, { backgroundColor: colors.card }]}>
                         <Text style={[styles.modalTitle, { color: colors.text }]}>¿Desea borrar este horario?</Text>
                         <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={[styles.button, styles.confirmButton, { backgroundColor: colors.primary }]} onPress={handleDeleteSchedule}>
+                            <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleDeleteSchedule}>
                                 <Text style={styles.buttonText}>Sí</Text>
                             </TouchableOpacity>
                             <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setConfirmDeleteModalVisible(false)}>
@@ -339,59 +304,6 @@ const styles = StyleSheet.create({
         justifyContent: 'flex-end',
         marginTop: 0,
     },
-    modalContainer: {
-        flex: 1,
-        justifyContent: 'center',
-        alignItems: 'center',
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-    },
-    modalContent: {
-        width: '90%',
-        borderRadius: 10,
-        padding: 20,
-        alignItems: 'center',
-        shadowColor: '#000',
-        shadowOffset: { width: 0, height: 2 },
-        shadowOpacity: 0.25,
-        shadowRadius: 4,
-        elevation: 5,
-    },
-    modalTitle: {
-        fontSize: 24,
-        fontWeight: 'bold',
-        marginBottom: 16,
-    },
-    input: {
-        borderWidth: 1,
-        padding: 8,
-        marginVertical: 8,
-        width: '100%',
-        borderRadius: 5,
-    },
-    buttonContainer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        width: '100%',
-        marginTop: 16,
-    },
-    button: {
-        flex: 1,
-        padding: 10,
-        borderRadius: 5,
-        alignItems: 'center',
-        marginHorizontal: 5,
-    },
-    confirmButton: {
-        backgroundColor: '#007AFF',
-    },
-    cancelButton: {
-        backgroundColor: '#FF3B30',
-    },
-    buttonText: {
-        color: '#fff',
-        fontSize: 16,
-        fontWeight: 'bold',
-    },
     scheduleSummary: {
         padding: 10,
         fontSize: 16,
@@ -407,5 +319,47 @@ const styles = StyleSheet.create({
         fontSize: 16,
         textAlign: 'center',
         marginTop: 10,
+    },
+    modalContainer: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        backgroundColor: 'rgba(0, 0, 0, 0.5)',
+    },
+    modalView: {
+        width: '90%',
+        borderRadius: 10,
+        padding: 20,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    modalTitle: {
+        fontSize: 24,
+        fontWeight: 'bold',
+        marginBottom: 16,
+    },
+    buttonContainer: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        width: '100%',
+        marginTop: 16,
+    },
+    button: {
+        padding: 10,
+        borderRadius: 5,
+        width: '48%',
+        alignItems: 'center',
+    },
+    cancelButton: {
+        backgroundColor: '#ff4d4d',
+    },
+    buttonText: {
+        color: '#fff',
+        fontSize: 16,
+        fontWeight: 'bold',
     },
 });

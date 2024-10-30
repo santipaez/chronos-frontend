@@ -3,14 +3,10 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, FlatList } from 'r
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Picker } from '@react-native-picker/picker';
 import { Settings, Bell } from 'lucide-react-native';
-import * as Location from 'expo-location';
-import { API_WEATHER } from '../config';
-import { requestNotificationPermissions, cancelAllNotifications } from '../notifications'; // Importar correctamente
 
 export default function OptionsScreen() {
   const [notificationHours, setNotificationHours] = useState(12);
   const [city, setCity] = useState('');
-  const [citySuggestions, setCitySuggestions] = useState([]);
   const [selectedCity, setSelectedCity] = useState(null);
 
   useEffect(() => {
@@ -32,48 +28,6 @@ export default function OptionsScreen() {
     setNotificationHours(hours);
     await AsyncStorage.setItem('@notification_hours', hours.toString());
   };
-
-  const fetchCitySuggestions = async (query) => {
-    try {
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/find?q=${query}&type=like&sort=population&cnt=5&appid=${API_WEATHER}`);
-      const data = await response.json();
-      setCitySuggestions(data.list);
-    } catch (error) {
-      console.error('Error fetching city suggestions:', error);
-    }
-  };
-
-  const handleCitySelect = async (city) => {
-    setSelectedCity(city);
-    setCity(city.name);
-    setCitySuggestions([]);
-    await AsyncStorage.setItem('@selected_city', JSON.stringify(city));
-  };
-
-  const getLocationAndWeather = async () => {
-    try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') {
-        alert('Permiso de ubicación denegado');
-        return;
-      }
-      const location = await Location.getCurrentPositionAsync({});
-      const { latitude, longitude } = location.coords;
-      const response = await fetch(`https://api.openweathermap.org/data/2.5/weather?lat=${latitude}&lon=${longitude}&appid=${API_WEATHER}&units=metric`);
-      const data = await response.json();
-      setSelectedCity(data);
-      setCity(data.name);
-      await AsyncStorage.setItem('@selected_city', JSON.stringify(data));
-    } catch (error) {
-      console.error('Error getting location and weather:', error);
-    }
-  };
-
-  const renderCitySuggestion = ({ item }) => (
-    <TouchableOpacity onPress={() => handleCitySelect(item)}>
-      <Text style={styles.suggestion}>{item.name}, {item.sys.country}</Text>
-    </TouchableOpacity>
-  );
 
   const renderOptionScreen = () => (
     <View style={styles.container}>
@@ -104,21 +58,10 @@ export default function OptionsScreen() {
         </View>
         <TextInput
           style={styles.input}
-          placeholder="Ingrese su ciudad"
+          placeholder="Ciudad"
           value={city}
-          onChangeText={(text) => {
-            setCity(text);
-            fetchCitySuggestions(text);
-          }}
+          editable={false}
         />
-        <FlatList
-          data={citySuggestions}
-          keyExtractor={(item) => item.id.toString()}
-          renderItem={renderCitySuggestion}
-        />
-        <TouchableOpacity style={styles.button} onPress={getLocationAndWeather}>
-          <Text style={styles.buttonText}>Usar mi ubicación actual</Text>
-        </TouchableOpacity>
       </View>
     </View>
   );
@@ -192,6 +135,7 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 5,
     marginBottom: 10,
+    backgroundColor: '#e0e0e0',
   },
   suggestion: {
     padding: 10,

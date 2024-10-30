@@ -9,7 +9,6 @@ const Welcome = () => {
     const navigation = useNavigation();
 
     useEffect(() => {
-        // Animación de fade in
         Animated.timing(fadeAnim, {
             toValue: 1,
             duration: 500,
@@ -17,7 +16,6 @@ const Welcome = () => {
             useNativeDriver: true,
         }).start();
 
-        // Animación de rotación
         Animated.loop(
             Animated.timing(rotateAnim, {
                 toValue: 1,
@@ -28,7 +26,6 @@ const Welcome = () => {
         ).start();
 
         const timer = setTimeout(async () => {
-            // Animación de fade out
             Animated.timing(fadeAnim, {
                 toValue: 0,
                 duration: 250,
@@ -36,7 +33,7 @@ const Welcome = () => {
                 useNativeDriver: true,
             }).start();
             navigation.navigate('LoginScreen');
-        }, 1000); // Cambia el tiempo según sea necesario
+        }, 1000);
 
         return () => clearTimeout(timer);
     }, [fadeAnim, rotateAnim, navigation]);

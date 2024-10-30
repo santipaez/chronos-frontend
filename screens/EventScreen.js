@@ -1,15 +1,15 @@
 import React, { useState, useEffect } from 'react';
-import { View, TextInput, Button, StyleSheet, Modal, TouchableOpacity, Text, FlatList, Platform } from 'react-native';
+import { View, StyleSheet, Modal, TouchableOpacity, Text, FlatList, Platform } from 'react-native';
 import { Calendar } from 'react-native-calendars';
 import { createEvent, getEvents, updateEvent, deleteEvent } from '../components/Event';
-import { Sun, Cloud, CloudRain, CloudSnow, CloudLightning, Edit, Trash, ChevronLeft, ChevronRight } from 'lucide-react-native';
-import DateTimePicker from '@react-native-community/datetimepicker';
+import { ChevronLeft, ChevronRight, Edit, Trash } from 'lucide-react-native';
 import { useFocusEffect, useTheme } from '@react-navigation/native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import moment from 'moment';
-import 'moment/locale/es'; // Importar el idioma español para moment.js
+import 'moment/locale/es';
 import { requestNotificationPermissions, scheduleNotification } from '../notifications';
-import { API_WEATHER } from '../config';
+import { fetchTemperature, getWeatherIcon } from '../components/Weather';
+import { EventModal, ViewEventModal } from '../components/EventModal';
 
 const EventScreen = ({ navigation }) => {
     const { colors, dark } = useTheme();
@@ -31,7 +31,7 @@ const EventScreen = ({ navigation }) => {
         React.useCallback(() => {
             fetchEvents();
             loadSettings();
-            requestNotificationPermissions(); // Solicitar permisos de notificación
+            requestNotificationPermissions();
         }, [])
     );
 
@@ -57,32 +57,6 @@ const EventScreen = ({ navigation }) => {
             console.error('Error al obtener los eventos:', error);
         }
     };
-
-    const fetchTemperature = async (date) => {
-        try {
-            const storedCity = await AsyncStorage.getItem('@selected_city');
-            const city = storedCity ? JSON.parse(storedCity).name : 'YOUR_DEFAULT_CITY';
-            const response = await fetch(`https://api.openweathermap.org/data/2.5/forecast?q=${city}&appid=${API_WEATHER}&units=metric`);
-            const data = await response.json();
-            if (data && data.list) {
-                const eventDate = moment(date).startOf('day');
-                const dailyForecasts = data.list.filter(forecast => moment(forecast.dt_txt).isSame(eventDate, 'day'));
-                if (dailyForecasts.length > 0) {
-                    const maxTemp = Math.max(...dailyForecasts.map(forecast => forecast.main.temp_max));
-                    const weatherIcon = dailyForecasts[0].weather[0].main;
-                    return { temp: maxTemp, icon: weatherIcon };
-                } else {
-                    return { temp: null, icon: null };
-                }
-            } else {
-                console.error('Error: Datos de pronóstico no disponibles');
-                return { temp: null, icon: null };
-            }
-        } catch (error) {
-            console.error('Error fetching temperature:', error);
-            return { temp: null, icon: null };
-        }
-    };
     
     const fetchTemperatures = async (events) => {
         const newTemperatures = {};
@@ -91,23 +65,6 @@ const EventScreen = ({ navigation }) => {
             newTemperatures[event.date] = tempData;
         }
         setTemperatures(newTemperatures);
-    };
-    
-    const getWeatherIcon = (weather) => {
-        switch (weather) {
-            case 'Clear':
-                return <Sun size={24} color="#FFA500" style={styles.weatherIcon} />; // Color más oscuro
-            case 'Clouds':
-                return <Cloud size={24} color="#B0C4DE" style={styles.weatherIcon} />;
-            case 'Rain':
-                return <CloudRain size={24} color="#1E90FF" style={styles.weatherIcon} />;
-            case 'Snow':
-                return <CloudSnow size={24} color="#00BFFF" style={styles.weatherIcon} />;
-            case 'Thunderstorm':
-                return <CloudLightning size={24} color="#FFA500" style={styles.weatherIcon} />;
-            default:
-                return null;
-        }
     };
     
     const handleCreateEvent = async () => {
@@ -159,14 +116,19 @@ const EventScreen = ({ navigation }) => {
         return moment(date).locale('es').format('dddd, D [de] MMMM');
     };
 
+    const markedDates = events.reduce((acc, event) => {
+        acc[event.date] = { marked: true, dotColor: 'green', textColor: 'green' };
+        return acc;
+    }, {});
+
     const renderEventItem = ({ item }) => (
         <View>
             <View style={styles.eventDateHeaderContainer}>
-                <Text style={[styles.eventDateHeader, { color: colors.primary}]}>{formatDate(item.date)}</Text>
+                <Text style={[styles.eventDateHeader, { color: colors.primary }]}>{formatDate(item.date)}</Text>
                 <View style={styles.weatherContainer}>
                     {temperatures[item.date]?.temp !== null && temperatures[item.date]?.temp !== undefined && (
                         <>
-                            <Text style={[styles.eventTemperature, { color: colors.primary, fontWeight: 'bold'}]}>
+                            <Text style={[styles.eventTemperature, { color: colors.primary, fontWeight: 'bold' }]}>
                                 {`${Math.round(temperatures[item.date].temp)}°C`}
                             </Text>
                             {getWeatherIcon(temperatures[item.date].icon)}
@@ -195,11 +157,6 @@ const EventScreen = ({ navigation }) => {
         </View>
     );
 
-    const markedDates = events.reduce((acc, event) => {
-        acc[event.date] = { marked: true, dotColor: 'green', textColor: 'green' };
-        return acc;
-    }, {});
-
     return (
         <View style={[styles.container, { backgroundColor: colors.background }]}>
             <FlatList
@@ -215,12 +172,7 @@ const EventScreen = ({ navigation }) => {
                                     alert('No puedes agendar eventos en días que ya pasaron.');
                                     return;
                                 }
-                                const event = events.find(e => e.date === day.dateString);
-                                if (event) {
-                                    openEventModal(event);
-                                } else {
-                                    openModal(day.dateString);
-                                }
+                                openModal(day.dateString);
                             }}
                             markedDates={{
                                 ...markedDates,
@@ -288,11 +240,9 @@ const EventScreen = ({ navigation }) => {
                 renderItem={renderEventItem}
                 contentContainerStyle={styles.eventList}
             />
-            <Modal
-                animationType="slide"
-                transparent={true}
+            <EventModal
                 visible={modalVisible}
-                onRequestClose={() => {
+                onClose={() => {
                     setModalVisible(false);
                     setSelectedDate(''); // Restablecer la fecha seleccionada
                     setEditingEvent(null);
@@ -300,81 +250,28 @@ const EventScreen = ({ navigation }) => {
                     setDescription('');
                     setStartTime(new Date());
                 }}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={[styles.modalView, { backgroundColor: colors.card }]}>
-                        <Text style={[styles.modalTitle, { color: colors.text }]}>{editingEvent ? 'Editar Evento' : 'Añadir Evento'}</Text>
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-                            placeholder="Nombre del evento"
-                            placeholderTextColor={colors.textSecondary}
-                            value={name}
-                            onChangeText={setName}
-                        />
-                        <TextInput
-                            style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}
-                            placeholder="Descripción"
-                            placeholderTextColor={colors.textSecondary}
-                            value={description}
-                            onChangeText={setDescription}
-                        />
-                        <TouchableOpacity onPress={() => setShowTimePicker(true)}>
-                            <Text style={[styles.input, { color: colors.text, borderColor: colors.border, backgroundColor: colors.background }]}>{`Hora de inicio: ${startTime.toTimeString().substring(0, 5)}`}</Text>
-                        </TouchableOpacity>
-                        {showTimePicker && (
-                            <DateTimePicker
-                                value={startTime}
-                                mode="time"
-                                display="default"
-                                onChange={(event, selectedDate) => {
-                                    setShowTimePicker(Platform.OS === 'ios');
-                                    if (selectedDate) {
-                                        setStartTime(selectedDate);
-                                    }
-                                }}
-                            />
-                        )}
-                        <View style={styles.buttonContainer}>
-                            <TouchableOpacity style={[styles.button, { backgroundColor: colors.primary }]} onPress={handleCreateEvent}>
-                                <Text style={styles.buttonText}>{editingEvent ? 'Guardar Cambios' : 'Crear Evento'}</Text>
-                            </TouchableOpacity>
-                            <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => {
-                                setModalVisible(false);
-                                setSelectedDate(''); // Restablecer la fecha seleccionada
-                                setEditingEvent(null);
-                                setName('');
-                                setDescription('');
-                                setStartTime(new Date());
-                            }}>
-                                <Text style={styles.buttonText}>Cancelar</Text>
-                            </TouchableOpacity>
-                        </View>
-                    </View>
-                </View>
-            </Modal>
-            <Modal
-                animationType="slide"
-                transparent={true}
+                onSave={handleCreateEvent}
+                editingEvent={editingEvent}
+                name={name}
+                setName={setName}
+                description={description}
+                setDescription={setDescription}
+                startTime={startTime}
+                setStartTime={setStartTime}
+                showTimePicker={showTimePicker}
+                setShowTimePicker={setShowTimePicker}
+                colors={colors}
+                styles={styles}
+            />
+            <ViewEventModal
                 visible={eventModalVisible}
-                onRequestClose={() => setEventModalVisible(false)}
-            >
-                <View style={styles.modalContainer}>
-                    <View style={[styles.modalView, { backgroundColor: colors.card }]}>
-                        {selectedEvent && (
-                            <>
-                                <Text style={[styles.modalTitle, { color: colors.text }]}>{selectedEvent.name}</Text>
-                                <Text style={[styles.eventDescription, { color: colors.textSecondary }]}>{selectedEvent.description}</Text>
-                                <Text style={[styles.eventTime, { color: colors.textSecondary }]}>{selectedEvent.startTime}</Text>
-                                <Text style={[styles.eventDate, { color: colors.textSecondary }]}>{formatDate(selectedEvent.date)}</Text>
-                                <Text style={[styles.eventTemperature, { color: colors.textSecondary }]}>{`Temperatura: ${temperatures[selectedEvent.date] || 'Cargando...'}°C`}</Text>
-                                <TouchableOpacity style={[styles.button, styles.cancelButton]} onPress={() => setEventModalVisible(false)}>
-                                    <Text style={styles.buttonText}>Cerrar</Text>
-                                </TouchableOpacity>
-                            </>
-                        )}
-                    </View>
-                </View>
-            </Modal>
+                onClose={() => setEventModalVisible(false)}
+                selectedEvent={selectedEvent}
+                temperatures={temperatures}
+                formatDate={formatDate}
+                colors={colors}
+                styles={styles}
+            />
         </View>
     );
 };
@@ -454,10 +351,6 @@ const styles = StyleSheet.create({
     },
     eventTime: {
         fontSize: 14,
-    },
-    eventTemperature: {
-        fontSize: 14,
-        marginVertical: 4,
     },
     eventActions: {
         flexDirection: 'row',
