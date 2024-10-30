@@ -71,6 +71,11 @@ const getHeaders = async () => {
     };
 };
 
+export const getUserIdFromStorage = async () => {
+    const userId = await AsyncStorage.getItem('@user_id');
+    return userId ? parseInt(userId, 10) : null;
+};
+
 export const getSchedules = async () => {
     try {
         const headers = await getHeaders();
@@ -107,7 +112,9 @@ export const getScheduleById = async (id) => {
 export const createSchedule = async (schedule) => {
     try {
         const headers = await getHeaders();
-        const response = await axios.post(SCHEDULE_URL, schedule, { headers });
+        const userId = await AsyncStorage.getItem('@user_id');
+        const scheduleWithUser = { ...schedule, user: { id: userId } };
+        const response = await axios.post(SCHEDULE_URL, scheduleWithUser, { headers });
         return response.data;
     } catch (error) {
         console.error('Error al crear el horario:', error);
@@ -161,8 +168,9 @@ export const handleLogin = async (username, password) => {
                 'Content-Type': 'application/json'
             }
         });
-        const token = response.data.token; 
+        const { token, userId } = response.data; 
         await AsyncStorage.setItem('@jwt_token', token);
+        await AsyncStorage.setItem('@user_id', userId.toString());
         return response;
     } catch (err) {
         throw err;

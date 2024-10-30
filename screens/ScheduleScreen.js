@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Button, Modal, Platform, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, Modal, Platform } from 'react-native';
 import DateTimePicker from '@react-native-community/datetimepicker';
 import { getSchedulesByDay, createSchedule, updateSchedule, deleteSchedule } from '../API';
 import { Edit, Trash } from 'lucide-react-native';
-import { useTheme } from '@react-navigation/native';
+import { useTheme, useFocusEffect } from '@react-navigation/native';
 import ScheduleModal from '../components/ScheduleModal';
 
 const daysOfWeek = ['Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado', 'Domingo'];
@@ -26,13 +26,6 @@ export default function ScheduleScreen() {
     const [showStartTimePicker, setShowStartTimePicker] = useState(false);
     const [showEndTimePicker, setShowEndTimePicker] = useState(false);
 
-    useEffect(() => {
-        // Cargar horarios para todos los días al inicio
-        daysOfWeek.forEach(day => {
-            fetchSchedulesByDay(day);
-        });
-    }, []);
-
     const fetchSchedulesByDay = async (day) => {
         const daySchedules = await getSchedulesByDay(day);
         setSchedules(prevSchedules => ({
@@ -40,6 +33,15 @@ export default function ScheduleScreen() {
             [day]: daySchedules,
         }));
     };
+
+    useFocusEffect(
+        React.useCallback(() => {
+            // Cargar horarios para todos los días cuando la pantalla gana el foco
+            daysOfWeek.forEach(day => {
+                fetchSchedulesByDay(day);
+            });
+        }, [])
+    );
 
     const handleAddSchedule = async () => {
         const formattedSchedule = {
