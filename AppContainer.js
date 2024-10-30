@@ -11,9 +11,7 @@ import RegisterScreen from './screens/RegisterScreen';
 import HomeScreen from './screens/HomeScreen';
 import ScheduleScreen from './screens/ScheduleScreen';
 import EventScreen from './screens/EventScreen';
-import WeatherScreen from './screens/WeatherScreen';
 import DrawerContent from './components/DrawerContent';
-import ProfileScreen from './screens/ProfileScreen';
 import OptionsScreen from './screens/OptionsScreen';
 import LogoutScreen from './screens/LogoutScreen';
 
@@ -36,8 +34,6 @@ function TabNavigator({ isDarkMode }) {
                         icon = <Clock color={color} size={size} />;
                     } else if (route.name === 'Agendar') {
                         icon = <PlusCircle color={color} size={size} />;
-                    } else if (route.name === 'Clima') { // Nueva pestaña
-                        icon = <Sun color={color} size={size} />;
                     }
                     return icon;
                 },
@@ -78,17 +74,6 @@ function TabNavigator({ isDarkMode }) {
                     ),
                 })}
             />
-            <Tab.Screen
-                name="Clima" // Nueva pestaña
-                component={WeatherScreen}
-                options={({ navigation }) => ({
-                    headerLeft: () => (
-                        <TouchableOpacity onPress={() => navigation.openDrawer()} style={{ marginLeft: 16 }}>
-                            <Menu color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
-                        </TouchableOpacity>
-                    ),
-                })}
-            />
         </Tab.Navigator>
     );
 }
@@ -118,15 +103,6 @@ export default function App() {
                 <Drawer.Screen name="HomeScreen" options={{ headerShown: false }} >
                     {props => <TabNavigator {...props} isDarkMode={isDarkMode} />}
                 </Drawer.Screen>
-                <Drawer.Screen name="ProfileScreen" component={ProfileScreen} options={({ navigation }) => ({
-                    headerShown: true,
-                    title: 'Mi perfil',
-                    headerLeft: () => (
-                        <TouchableOpacity onPress={() => navigation.navigate(HomeScreen)} style={{ marginLeft: 16 }}>
-                            <ArrowLeft color={isDarkMode ? "#ffffff" : "#000000"} size={24} />
-                        </TouchableOpacity>
-                    ),
-                })} />
                 <Drawer.Screen name="OptionsScreen" component={OptionsScreen} options={({ navigation }) => ({
                     headerShown: true,
                     title: 'Opciones',
